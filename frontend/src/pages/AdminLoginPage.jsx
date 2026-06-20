@@ -113,7 +113,7 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        <div className="login-hero-side" style={{ background: 'linear-gradient(135deg, #0b1121 0%, #1a0a2e 50%, #0f1724 100%)' }}>
+        <div className="login-hero-side">
           <div className="login-hero-content">
             <div className="lhero-badge" style={{ borderColor: 'rgba(124,58,237,0.3)' }}>
               <span className="lhero-badge-dot" style={{ background: '#7c3aed' }} />

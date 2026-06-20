@@ -49,7 +49,6 @@
   align-items: center;
   justify-content: center;
   padding: 48px;
-  border-right: 1px solid rgba(255,255,255,0.04);
   background: rgba(255,255,255,0.015);
   position: relative;
 }
@@ -57,11 +56,22 @@
 .login-form-side::after {
   content: '';
   position: absolute;
+  right: -1px;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.25) 20%, #3b82f6 40%, #8b5cf6 50%, #3b82f6 60%, rgba(59,130,246,0.25) 80%, transparent 100%);
+  filter: blur(1px);
+}
+
+.login-form-side::before {
+  content: '';
+  position: absolute;
   right: 0;
-  top: 10%;
-  height: 80%;
+  top: 0;
+  height: 100%;
   width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(59,130,246,0.15), transparent);
+  background: linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.4) 20%, #60a5fa 40%, #a78bfa 50%, #60a5fa 60%, rgba(59,130,246,0.4) 80%, transparent 100%);
 }
 
 .login-form-container {
@@ -357,9 +367,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, rgba(11,17,33,0.92), rgba(15,26,46,0.88)), url('/ticketingsystem.webp') center/cover no-repeat;
+  position: relative;
+  overflow: hidden;
   padding: 48px 56px;
-  overflow-y: auto;
 }
+
+.login-hero-side::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 40px;
+  background: linear-gradient(90deg, rgba(59,130,246,0.04) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+
 
 .login-hero-content {
   width: 100%;
@@ -562,7 +587,9 @@
     padding: 40px 24px;
   }
 
+  .login-form-side::before,
   .login-form-side::after { display: none; }
+  .login-hero-side::before { display: none; }
   .login-hero-side { padding: 40px 24px; }
   .lhero-title { font-size: 30px; }
 }
