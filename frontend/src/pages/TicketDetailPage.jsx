@@ -1,25 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getTicketById, updateTicketStatus, addTicketComment } from '../data/mockTickets';
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { getTicketById, updateTicketStatus, addTicketComment } from "../data/mockTickets";
+import Badge from "../components/common/Badge";
+import { STATUTS, getStatut, getPriorite } from "../constants/ticketEnums";
+import "../styles/form.css";
+import "../styles/tickets.css";
+import "../styles/detail.css";
 
 export default function TicketDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [ticket, setTicket] = useState(null);
-  const [commentText, setCommentText] = useState('');
-  
-  const STATUS_OPTIONS = ['Nouveau', 'En cours', 'En attente', 'Résolu', 'Fermé'];
+  const [chargement, setChargement] = useState(true);
+  const [nouveauComm, setNouveauComm] = useState("");
 
   useEffect(() => {
-    const fetchedTicket = getTicketById(id);
-    if (fetchedTicket) {
-      setTicket(fetchedTicket);
-    } else {
-      // If ticket not found, we could redirect or show error
+    const t = getTicketById(id);
+    if (t) {
+      setTicket(t);
     }
+    setChargement(false);
   }, [id]);
 
-  const handleStatusChange = (e) => {
+  const ajouterCommentaire = (e) => {
+    e.preventDefault();
+    if (!nouveauComm.trim()) return;
+
+    const updatedTicket = addTicketComment(id, nouveauComm.trim());
+    if (updatedTicket) {
+      setTicket({ ...updatedTicket });
+      setNouveauComm("");
+    }
+  };
+
+  const handleStatutChange = (e) => {
     const newStatus = e.target.value;
     const updatedTicket = updateTicketStatus(id, newStatus);
     if (updatedTicket) {
@@ -27,115 +42,136 @@ export default function TicketDetailPage() {
     }
   };
 
-  const handleAddComment = (e) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-
-    const updatedTicket = addTicketComment(id, commentText);
-    if (updatedTicket) {
-      setTicket({ ...updatedTicket });
-      setCommentText(''); // Clear input
-    }
-  };
-
-  if (!ticket) {
-    return <div style={{ padding: '24px', textAlign: 'center' }}>Chargement du ticket...</div>;
+  if (chargement) {
+    return (
+      <div className="page">
+        <p className="muted">Chargement...</p>
+      </div>
+    );
   }
 
+  if (!ticket) {
+    return (
+      <div className="page">
+        <p>Ticket introuvable.</p>
+        <button onClick={() => navigate(-1)} className="btn btn--ghost">
+          ← Retour
+        </button>
+      </div>
+    );
+  }
+
+  const statutObj = getStatut(ticket.statut);
+  const prioriteObj = getPriorite(ticket.priorite);
+
+  const formaterDate = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: '2-digit', minute:'2-digit' });
+  };
+
   return (
-    <div className="ticket-detail-page" style={{ padding: '24px', maxWidth: '900px', margin: '0 auto' }}>
-      <button 
-        onClick={() => navigate('/assigned')}
-        style={{ marginBottom: '16px', padding: '8px 16px', cursor: 'pointer', border: '1px solid #ccc', borderRadius: '4px', background: '#f9f9f9' }}
-      >
-        &larr; Retour aux tickets
+    <div className="page">
+      <button onClick={() => navigate(-1)} className="back-link" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, font: 'inherit' }}>
+        ← Retour
       </button>
 
-      <div className="ticket-header" style={{ borderBottom: '2px solid #eee', paddingBottom: '16px', marginBottom: '24px' }}>
-        <h1 style={{ margin: '0 0 12px 0', color: '#333' }}>{ticket.title} <span style={{ color: '#888', fontSize: '18px' }}>#{ticket.id}</span></h1>
-        
-        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div className="status-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label htmlFor="status" style={{ fontWeight: 'bold', color: '#555' }}>Statut :</label>
-            <select 
-              id="status" 
-              value={ticket.status} 
-              onChange={handleStatusChange}
-              style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #ccc' }}
-            >
-              {STATUS_OPTIONS.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-          </div>
-          <span style={{ fontSize: '14px', color: '#666' }}><strong>Priorité:</strong> {ticket.priority}</span>
-          <span style={{ fontSize: '14px', color: '#666' }}><strong>Créateur:</strong> {ticket.creator}</span>
-          <span style={{ fontSize: '14px', color: '#666' }}><strong>Créé le:</strong> {new Date(ticket.createdAt).toLocaleString()}</span>
-        </div>
-      </div>
-
-      <div className="ticket-description" style={{ backgroundColor: '#f5f7fa', padding: '20px', borderRadius: '8px', marginBottom: '32px' }}>
-        <h3 style={{ marginTop: 0, color: '#333' }}>Description</h3>
-        <p style={{ whiteSpace: 'pre-wrap', color: '#444', lineHeight: '1.5' }}>{ticket.description}</p>
-      </div>
-
-      <div className="ticket-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <h3 style={{ margin: 0, borderBottom: '1px solid #eee', paddingBottom: '8px' }}>Historique et Commentaires</h3>
-        
-        <div className="history-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {ticket.history.map((entry) => (
-            <div 
-              key={entry.id} 
-              className={`history-entry type-${entry.type}`}
-              style={{
-                padding: '16px',
-                borderRadius: '8px',
-                border: entry.type === 'comment' ? '1px solid #bbdefb' : '1px solid #eee',
-                backgroundColor: entry.type === 'comment' ? '#e3f2fd' : '#fff',
-                marginLeft: entry.type === 'system' ? '20px' : '0'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '12px', color: '#666' }}>
-                <strong>{entry.author}</strong>
-                <span>{new Date(entry.date).toLocaleString()}</span>
-              </div>
-              <div style={{ color: '#333' }}>
-                {entry.type === 'system' ? (
-                  <i>{entry.action}</i>
-                ) : (
-                  <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{entry.content}</p>
-                )}
-              </div>
+      <div className="card">
+        <div className="detail-head" style={{ flexWrap: 'wrap', gap: '16px' }}>
+          <h1 className="page__title" style={{ margin: 0 }}>{ticket.titre}</h1>
+          <div className="detail-badges" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Badge label={prioriteObj.label} color={prioriteObj.color} />
+            <div className="status-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '12px' }}>
+              <span style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Changer :</span>
+              <select 
+                className="select" 
+                value={ticket.statut} 
+                onChange={handleStatutChange}
+                style={{ padding: '4px 8px', fontSize: '13px', width: 'auto' }}
+              >
+                {STATUTS.map(s => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
             </div>
-          ))}
+          </div>
         </div>
 
-        <form onSubmit={handleAddComment} className="comment-form" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <label htmlFor="commentText" style={{ fontWeight: 'bold' }}>Ajouter un commentaire :</label>
-          <textarea
-            id="commentText"
-            rows="4"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Tapez votre message ici..."
-            style={{ padding: '12px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical' }}
-          />
-          <button 
-            type="submit" 
-            disabled={!commentText.trim()}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: commentText.trim() ? '#0056b3' : '#ccc',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: commentText.trim() ? 'pointer' : 'not-allowed',
-              alignSelf: 'flex-end',
-              fontWeight: 'bold'
-            }}
-          >
-            Envoyer
-          </button>
+        <dl className="detail-meta">
+          <div>
+            <dt>Catégorie</dt>
+            <dd>{ticket.categorie}</dd>
+          </div>
+          <div>
+            <dt>Créé par</dt>
+            <dd>{ticket.auteur}</dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd>{formaterDate(ticket.date_creation)}</dd>
+          </div>
+        </dl>
+
+        <div className="detail-section">
+          <h2 className="detail-section__title">Description</h2>
+          <p className="detail-description">{ticket.description}</p>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: "var(--space-lg)" }}>
+        <h2 className="detail-section__title">
+          Historique et Commentaires ({ticket.history.length})
+        </h2>
+
+        {ticket.history.length === 0 ? (
+          <p className="muted">Aucun historique pour le moment.</p>
+        ) : (
+          <ul className="comment-list" style={{ listStyle: 'none', padding: 0 }}>
+            {ticket.history.map((h) => (
+              <li key={h.id} className="comment" style={{ 
+                borderLeft: h.type === 'system' ? '3px solid var(--color-border)' : '3px solid var(--color-primary)',
+                backgroundColor: h.type === 'system' ? '#fafafa' : '#fff',
+                marginLeft: h.type === 'system' ? '1rem' : '0'
+              }}>
+                <div className="comment__head">
+                  <span className="comment__author">{h.author}</span>
+                  <span className="comment__date">{formaterDate(h.date)}</span>
+                </div>
+                <div className="comment__body">
+                  {h.type === 'system' ? (
+                    <em style={{ color: 'var(--color-text-muted)' }}>{h.action}</em>
+                  ) : (
+                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{h.content}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <form onSubmit={ajouterCommentaire} className="comment-form" noValidate style={{ marginTop: '24px' }}>
+          <div className="field">
+            <label className="field__label" htmlFor="commentaire">
+              Ajouter un commentaire
+            </label>
+            <textarea
+              id="commentaire"
+              className="textarea"
+              placeholder="Écris ton commentaire..."
+              value={nouveauComm}
+              onChange={(e) => setNouveauComm(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="form__actions">
+            <button
+              type="submit"
+              className="btn btn--primary"
+              disabled={!nouveauComm.trim()}
+            >
+              Publier
+            </button>
+          </div>
         </form>
       </div>
     </div>

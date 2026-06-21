@@ -20,18 +20,59 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = useCallback(async (email, password) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.message || 'Erreur de connexion')
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('user', JSON.stringify(data.user))
-    setToken(data.token)
-    setUser(data.user)
-    return data
+    // MOCK LOGIN POUR TESTER SANS BACKEND
+    if (email === 'technicien@test.com' || email === 'tech@test.com') {
+      const mockData = {
+        token: 'mock-jwt-token',
+        user: { id: 2, email, nom: 'Malick', role: 'technicien' }
+      }
+      localStorage.setItem('token', mockData.token)
+      localStorage.setItem('user', JSON.stringify(mockData.user))
+      setToken(mockData.token)
+      setUser(mockData.user)
+      return mockData
+    }
+
+    if (email === 'user@test.com' || email === 'utilisateur@test.com') {
+      const mockData = {
+        token: 'mock-jwt-token-user',
+        user: { id: 3, email, nom: 'Awa Ndiaye', role: 'utilisateur' }
+      }
+      localStorage.setItem('token', mockData.token)
+      localStorage.setItem('user', JSON.stringify(mockData.user))
+      setToken(mockData.token)
+      setUser(mockData.user)
+      return mockData
+    }
+
+    if (email === 'admin@test.com') {
+      const mockData = {
+        token: 'mock-jwt-token-admin',
+        user: { id: 1, email, nom: 'Admin', role: 'administrateur' }
+      }
+      localStorage.setItem('token', mockData.token)
+      localStorage.setItem('user', JSON.stringify(mockData.user))
+      setToken(mockData.token)
+      setUser(mockData.user)
+      return mockData
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || 'Erreur de connexion')
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setToken(data.token)
+      setUser(data.user)
+      return data
+    } catch (err) {
+      throw new Error(err.message === 'Failed to fetch' ? "Le serveur backend n'est pas lancé. Utilisez user@test.com, tech@test.com ou admin@test.com pour tester." : err.message || 'Erreur de connexion')
+    }
   }, [])
 
   const register = useCallback(async (userData) => {

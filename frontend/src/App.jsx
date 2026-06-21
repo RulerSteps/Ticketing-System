@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute, PublicRoute } from './components/common/ProtectedRoute'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { useAuth } from './context/AuthContext'
 import LoginPage from './pages/LoginPage'
 import AdminLoginPage from './pages/AdminLoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -11,6 +12,17 @@ import Sidebar from './components/layout/Sidebar'
 import Navbar from './components/layout/Navbar'
 import AssignedTicketsPage from './pages/AssignedTicketsPage'
 import TicketDetailPage from './pages/TicketDetailPage'
+import MyTicketsPage from './pages/MyTicketsPage'
+import NewTicketPage from './pages/NewTicketPage'
+import ProfilePage from './pages/ProfilePage'
+
+function RootRedirect() {
+  const { hasRole, loading } = useAuth()
+  if (loading) return null;
+  if (hasRole('administrateur')) return <Navigate to="/dashboard" replace />
+  if (hasRole('technicien')) return <Navigate to="/assigned" replace />
+  return <Navigate to="/tickets" replace />
+}
 
 function DashboardPlaceholder() {
   return (
@@ -21,23 +33,9 @@ function DashboardPlaceholder() {
   )
 }
 
-function TicketsPlaceholder() {
-  return (
-    <div style={{ padding: 32, textAlign: 'center' }}>
-      <h2>Mes tickets</h2>
-      <p style={{ color: 'var(--color-text-light)', marginTop: 8 }}>Liste de mes tickets</p>
-    </div>
-  )
-}
 
-function NewTicketPlaceholder() {
-  return (
-    <div style={{ padding: 32, textAlign: 'center' }}>
-      <h2>Créer un ticket</h2>
-      <p style={{ color: 'var(--color-text-light)', marginTop: 8 }}>Formulaire de création</p>
-    </div>
-  )
-}
+
+
 
 
 
@@ -59,14 +57,7 @@ function CategoriesPlaceholder() {
   )
 }
 
-function ProfilePlaceholder() {
-  return (
-    <div style={{ padding: 32, textAlign: 'center' }}>
-      <h2>Mon profil</h2>
-      <p style={{ color: 'var(--color-text-light)', marginTop: 8 }}>Modifier mon profil</p>
-    </div>
-  )
-}
+
 
 function PreviewLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -109,15 +100,15 @@ export default function App() {
 
 
           <Route path="/dashboard" element={<ProtectedRoute roles={['administrateur']}><DashboardPlaceholder /></ProtectedRoute>} />
-          <Route path="/tickets" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><TicketsPlaceholder /></ProtectedRoute>} />
-          <Route path="/tickets/new" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><NewTicketPlaceholder /></ProtectedRoute>} />
+          <Route path="/tickets" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><MyTicketsPage /></ProtectedRoute>} />
+          <Route path="/tickets/new" element={<ProtectedRoute roles={['utilisateur']}><NewTicketPage /></ProtectedRoute>} />
           <Route path="/tickets/:id" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><TicketDetailPage /></ProtectedRoute>} />
           <Route path="/assigned" element={<ProtectedRoute roles={['technicien', 'administrateur']}><AssignedTicketsPage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute roles={['administrateur']}><UsersPlaceholder /></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute roles={['administrateur']}><CategoriesPlaceholder /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><ProfilePlaceholder /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><ProfilePage /></ProtectedRoute>} />
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<RootRedirect />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>

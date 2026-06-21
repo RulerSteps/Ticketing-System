@@ -24,7 +24,8 @@ export function ProtectedRoute({ children, roles }) {
   }
 
   if (roles && roles.length > 0 && !hasRole(roles)) {
-    return <Navigate to="/dashboard" replace />
+    const defaultRoute = hasRole('administrateur') ? '/dashboard' : (hasRole('technicien') ? '/assigned' : '/tickets')
+    return <Navigate to={defaultRoute} replace />
   }
 
   return (
@@ -53,7 +54,16 @@ export function PublicRoute({ children }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
+    // Redirection basée sur le rôle pour éviter la boucle infinie
+    const storedUser = localStorage.getItem('user');
+    let defaultRoute = '/tickets';
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      const role = user.role?.nom?.toLowerCase() || user.role?.toLowerCase() || '';
+      if (role.includes('administrateur')) defaultRoute = '/dashboard';
+      else if (role.includes('technicien')) defaultRoute = '/assigned';
+    }
+    return <Navigate to={defaultRoute} replace />
   }
 
   return children
