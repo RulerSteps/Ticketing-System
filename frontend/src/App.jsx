@@ -9,6 +9,8 @@ import RegisterPage from './pages/RegisterPage'
 import NotFoundPage from './pages/NotFoundPage'
 import Sidebar from './components/layout/Sidebar'
 import Navbar from './components/layout/Navbar'
+import AssignedTicketsPage from './pages/AssignedTicketsPage'
+import TicketDetailPage from './pages/TicketDetailPage'
 
 function DashboardPlaceholder() {
   return (
@@ -37,14 +39,7 @@ function NewTicketPlaceholder() {
   )
 }
 
-function AssignedPlaceholder() {
-  return (
-    <div style={{ padding: 32, textAlign: 'center' }}>
-      <h2>Tickets assignés</h2>
-      <p style={{ color: 'var(--color-text-light)', marginTop: 8 }}>Espace Technicien</p>
-    </div>
-  )
-}
+
 
 function UsersPlaceholder() {
   return (
@@ -116,7 +111,8 @@ export default function App() {
           <Route path="/dashboard" element={<ProtectedRoute roles={['administrateur']}><DashboardPlaceholder /></ProtectedRoute>} />
           <Route path="/tickets" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><TicketsPlaceholder /></ProtectedRoute>} />
           <Route path="/tickets/new" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><NewTicketPlaceholder /></ProtectedRoute>} />
-          <Route path="/assigned" element={<ProtectedRoute roles={['technicien', 'administrateur']}><AssignedPlaceholder /></ProtectedRoute>} />
+          <Route path="/tickets/:id" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><TicketDetailPage /></ProtectedRoute>} />
+          <Route path="/assigned" element={<ProtectedRoute roles={['technicien', 'administrateur']}><AssignedTicketsPage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute roles={['administrateur']}><UsersPlaceholder /></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute roles={['administrateur']}><CategoriesPlaceholder /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute roles={['utilisateur', 'technicien', 'administrateur']}><ProfilePlaceholder /></ProtectedRoute>} />
