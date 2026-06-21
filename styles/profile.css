@@ -1,0 +1,33 @@
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.profile-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.profile-head .muted {
+  margin: 2px 0 0;
+}
+
+.section-title {
+  font-size: 1.05rem;
+  margin: 0 0 var(--space-sm);
+}
