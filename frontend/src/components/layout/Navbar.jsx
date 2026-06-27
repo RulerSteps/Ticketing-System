@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { getNotifications, markNotificationAsRead } from '../../data/mockTickets'
 import './Navbar.css'
 
 export default function Navbar({ toggleSidebar }) {
   const { user, logout } = useAuth()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState(() => getNotifications())
   const menuRef = useRef(null)
   const notifRef = useRef(null)
+  const unread = notifications.filter(n => !n.lu).length
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -18,6 +21,17 @@ export default function Navbar({ toggleSidebar }) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const handleMarkRead = (id) => {
+    const updated = markNotificationAsRead(id)
+    setNotifications([...updated])
+  }
+
+  const formaterDate = (iso) => {
+    if (!iso) return ""
+    const d = new Date(iso)
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: '2-digit', minute: '2-digit' })
+  }
 
   return (
     <header className="navbar">
@@ -42,16 +56,33 @@ export default function Navbar({ toggleSidebar }) {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
-            <span className="navbar-notif-count">0</span>
+            {unread > 0 && <span className="navbar-notif-count">{unread}</span>}
           </button>
 
           {showNotifications && (
             <div className="navbar-dropdown">
               <div className="navbar-dropdown-header">
-                <span>Notifications</span>
+                <span>Notifications ({unread} non lue{unread > 1 ? 's' : ''})</span>
               </div>
               <div className="navbar-dropdown-body">
-                <p className="navbar-dropdown-empty">Aucune notification</p>
+                {notifications.length === 0 ? (
+                  <p className="navbar-dropdown-empty">Aucune notification</p>
+                ) : (
+                  notifications.slice(0, 10).map(n => (
+                    <div
+                      key={n.id}
+                      className={`navbar-dropdown-item${!n.lu ? '' : ''}`}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px', opacity: n.lu ? 0.6 : 1, cursor: 'pointer', flexDirection: 'column' }}
+                      onClick={() => !n.lu && handleMarkRead(n.id)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                        {!n.lu && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-primary)', flexShrink: 0 }} />}
+                        <span style={{ fontSize: '0.85rem', lineHeight: 1.3 }}>{n.message}</span>
+                      </div>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginLeft: 16 }}>{formaterDate(n.date)}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

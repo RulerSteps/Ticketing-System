@@ -1,25 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createTicket } from "../data/mockTickets";
+import * as ticketService from "../services/ticketService";
 import "../styles/form.css";
 
 const CATEGORIES = [
-  { value: "Matériel", icon: "🖥️", desc: "PC, imprimante, écran..." },
+  { value: "Matériel", icon: "🖥️", desc: "PC, imprimante, ecran..." },
   { value: "Réseau", icon: "📡", desc: "Wi-Fi, connexion, VPN..." },
   { value: "Logiciel", icon: "💿", desc: "Application, licence, installation..." },
   { value: "Messagerie", icon: "📧", desc: "Email, Outlook, Teams..." },
   { value: "Accès / Comptes", icon: "🔐", desc: "Mot de passe, droits, compte..." },
 ];
 
-const PRIORITES = [
-  { value: "basse", label: "Basse", color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", desc: "Peut attendre quelques jours" },
-  { value: "moyenne", label: "Moyenne", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", desc: "À traiter cette semaine" },
-  { value: "haute", label: "Haute", color: "#d97706", bg: "#fffbeb", border: "#fde68a", desc: "Bloque mon travail" },
-  { value: "urgente", label: "Urgente", color: "#dc2626", bg: "#fef2f2", border: "#fecaca", desc: "Critique, besoin immédiat" },
-];
-
-const STEPS = ["Catégorie", "Priorité", "Détails"];
+const STEPS = ["Categorie", "Details"];
 
 export default function NewTicketPage() {
   const navigate = useNavigate();
@@ -29,37 +22,38 @@ export default function NewTicketPage() {
     titre: "",
     description: "",
     categorie: "",
-    priorite: "",
+    fichier_joint: null,
   });
+  const [fichierNom, setFichierNom] = useState("");
 
   const canNext = () => {
     if (step === 0) return formData.categorie !== "";
-    if (step === 1) return formData.priorite !== "";
-    if (step === 2) return formData.titre.trim() !== "" && formData.description.trim() !== "";
+    if (step === 1) return formData.titre.trim() !== "" && formData.description.trim() !== "";
     return false;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canNext()) return;
     const authorName = user ? `${user.prenom || ''} ${user.nom || ''}`.trim() : "Utilisateur";
-    createTicket(formData, authorName);
+    await ticketService.createTicket({
+      ...formData,
+      fichier_joint: formData.fichier_joint ? { name: formData.fichier_joint.name, size: formData.fichier_joint.size } : null,
+    }, authorName);
     navigate("/tickets");
   };
 
   return (
     <div className="page" style={{ maxWidth: "680px", margin: "0 auto" }}>
-
-      {/* Header */}
       <div style={{ marginBottom: "32px" }}>
         <button
           onClick={() => step === 0 ? navigate(-1) : setStep(s => s - 1)}
           style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "0.9rem", padding: 0, display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px" }}
         >
-          ← {step === 0 ? "Retour" : "Étape précédente"}
+          ← {step === 0 ? "Retour" : "Etape precedente"}
         </button>
         <h1 className="page__title" style={{ margin: 0 }}>Nouveau ticket</h1>
         <p style={{ color: "var(--color-text-muted)", margin: "8px 0 0", fontSize: "0.95rem" }}>
-          Décrivez votre problème en quelques étapes simples.
+          Decrivez votre probleme en quelques etapes simples.
         </p>
       </div>
 
@@ -85,11 +79,11 @@ export default function NewTicketPage() {
         ))}
       </div>
 
-      {/* Step 0 — Catégorie */}
+      {/* Step 0 — Categorie */}
       {step === 0 && (
         <div className="card" style={{ padding: "var(--space-xl)" }}>
-          <h2 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 700 }}>Quelle est la catégorie du problème ?</h2>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: 0, marginBottom: "24px" }}>Choisissez la catégorie qui correspond le mieux à votre incident.</p>
+          <h2 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 700 }}>Quelle est la categorie du probleme ?</h2>
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: 0, marginBottom: "24px" }}>Choisissez la categorie qui correspond le mieux a votre incident.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {CATEGORIES.map(cat => (
               <button
@@ -122,63 +116,19 @@ export default function NewTicketPage() {
         </div>
       )}
 
-      {/* Step 1 — Priorité */}
+      {/* Step 1 — Details */}
       {step === 1 && (
         <div className="card" style={{ padding: "var(--space-xl)" }}>
-          <h2 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 700 }}>Quelle est l'urgence de votre problème ?</h2>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: 0, marginBottom: "24px" }}>Soyez honnête, cela aide le technicien à prioriser son travail.</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {PRIORITES.map(p => (
-              <button
-                key={p.value}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, priorite: p.value }))}
-                style={{
-                  display: "flex", alignItems: "center", gap: "16px",
-                  padding: "16px 20px", borderRadius: "12px", cursor: "pointer", textAlign: "left",
-                  border: `2px solid ${formData.priorite === p.value ? p.color : "var(--color-border)"}`,
-                  background: formData.priorite === p.value ? p.bg : "var(--color-surface)",
-                  transition: "all 0.2s ease", fontFamily: "inherit"
-                }}
-              >
-                <div style={{ width: "14px", height: "14px", borderRadius: "50%", background: p.color, flexShrink: 0, boxShadow: `0 0 0 3px ${p.bg}, 0 0 0 4px ${p.border}` }} />
-                <div>
-                  <div style={{ fontWeight: 600, color: p.color, fontSize: "0.95rem" }}>{p.label}</div>
-                  <div style={{ color: "var(--color-text-muted)", fontSize: "0.82rem", marginTop: "2px" }}>{p.desc}</div>
-                </div>
-                {formData.priorite === p.value && (
-                  <div style={{ marginLeft: "auto" }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={p.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+          <h2 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 700 }}>Decrivez votre probleme</h2>
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: 0, marginBottom: "24px" }}>Plus vous etes precis, plus le technicien pourra vous aider rapidement.</p>
 
-      {/* Step 2 — Détails */}
-      {step === 2 && (
-        <div className="card" style={{ padding: "var(--space-xl)" }}>
-          <h2 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 700 }}>Décrivez votre problème</h2>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: 0, marginBottom: "24px" }}>Plus vous êtes précis, plus le technicien pourra vous aider rapidement.</p>
-
-          {/* Summary chips */}
-          <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
-            <span style={{ background: "var(--color-primary-soft)", color: "var(--color-primary)", borderRadius: "20px", padding: "4px 12px", fontSize: "0.82rem", fontWeight: 600 }}>
-              {CATEGORIES.find(c => c.value === formData.categorie)?.icon} {formData.categorie}
-            </span>
-            {(() => {
-              const p = PRIORITES.find(p => p.value === formData.priorite);
-              return (
-                <span style={{ background: p.bg, color: p.color, border: `1px solid ${p.border}`, borderRadius: "20px", padding: "4px 12px", fontSize: "0.82rem", fontWeight: 600 }}>
-                  Priorité {p.label}
-                </span>
-              );
-            })()}
-          </div>
+          {formData.categorie && (
+            <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
+              <span style={{ background: "var(--color-primary-soft)", color: "var(--color-primary)", borderRadius: "20px", padding: "4px 12px", fontSize: "0.82rem", fontWeight: 600 }}>
+                {CATEGORIES.find(c => c.value === formData.categorie)?.icon} {formData.categorie}
+              </span>
+            </div>
+          )}
 
           <div className="field">
             <label className="field__label" htmlFor="titre">Titre court et clair <span style={{ color: "var(--color-danger)" }}>*</span></label>
@@ -186,7 +136,7 @@ export default function NewTicketPage() {
               type="text"
               id="titre"
               className="input"
-              placeholder="Ex: Imprimante bloquée au 3ème étage"
+              placeholder="Ex: Imprimante bloquee au 3eme etage"
               value={formData.titre}
               onChange={e => setFormData(p => ({ ...p, titre: e.target.value }))}
               maxLength={80}
@@ -195,15 +145,34 @@ export default function NewTicketPage() {
           </div>
 
           <div className="field" style={{ marginBottom: 0 }}>
-            <label className="field__label" htmlFor="description">Description détaillée <span style={{ color: "var(--color-danger)" }}>*</span></label>
+            <label className="field__label" htmlFor="description">Description detaillee <span style={{ color: "var(--color-danger)" }}>*</span></label>
             <textarea
               id="description"
               className="textarea"
               rows={5}
-              placeholder="Depuis quand ? Que s'est-il passé exactement ? Quels sont les messages d'erreur ?"
+              placeholder="Depuis quand ? Que s'est-il passe exactement ? Quels sont les messages d'erreur ?"
               value={formData.description}
               onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
             />
+          </div>
+
+          <div className="field">
+            <label className="field__label" htmlFor="fichier">Piece jointe (optionnelle)</label>
+            <input
+              type="file"
+              id="fichier"
+              className="input"
+              onChange={e => {
+                const file = e.target.files[0];
+                setFormData(p => ({ ...p, fichier_joint: file }));
+                setFichierNom(file ? file.name : "");
+              }}
+            />
+            {fichierNom && (
+              <span style={{ fontSize: "0.82rem", color: "var(--color-text-muted)" }}>
+                Fichier selectionne : {fichierNom}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -215,10 +184,10 @@ export default function NewTicketPage() {
           className="btn btn--ghost"
           onClick={() => step === 0 ? navigate(-1) : setStep(s => s - 1)}
         >
-          {step === 0 ? "Annuler" : "← Précédent"}
+          {step === 0 ? "Annuler" : "← Precedent"}
         </button>
 
-        {step < 2 ? (
+        {step < 1 ? (
           <button
             type="button"
             className="btn btn--primary"

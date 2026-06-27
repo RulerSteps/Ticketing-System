@@ -17,13 +17,14 @@
   --status-nouveau: #2563eb;
   --status-assigne: #7c3aed;
   --status-en-cours: #d97706;
+  --status-en-attente: #f59e0b;
   --status-resolu: #16a34a;
   --status-ferme: #6b7280;
 
-  --priorite-basse: #16a34a;
-  --priorite-moyenne: #2563eb;
+  --priorite-critique: #dc2626;
   --priorite-haute: #d97706;
-  --priorite-urgente: #dc2626;
+  --priorite-moyenne: #2563eb;
+  --priorite-basse: #16a34a;
 
   --font-base: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 

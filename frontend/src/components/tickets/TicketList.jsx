@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getTickets } from "../../data/mockTickets";
+import * as ticketService from "../../services/ticketService";
 import Badge from "../common/Badge";
 import { STATUTS, PRIORITES, getStatut, getPriorite } from "../../constants/ticketEnums";
 import "../../styles/tickets.css";
@@ -18,13 +18,13 @@ export default function TicketList({ title, showCreateButton = false, filterTick
   });
 
   useEffect(() => {
-    // Load from our local mock storage
-    let allTickets = getTickets();
-    if (filterTickets) {
-      allTickets = allTickets.filter(filterTickets);
-    }
-    setTickets(allTickets);
-    setChargement(false);
+    const load = async () => {
+      setChargement(true);
+      const all = await ticketService.getTickets();
+      setTickets(filterTickets ? all.filter(filterTickets) : all);
+      setChargement(false);
+    };
+    load();
   }, [filterTickets]);
 
   const handleFiltre = (e) => {
@@ -55,7 +55,7 @@ export default function TicketList({ title, showCreateButton = false, filterTick
         <h1 className="page__title">{title}</h1>
         {showCreateButton && (
           <Link to="/tickets/new" className="btn btn--primary">
-            + Créer un ticket
+            + Creer un ticket
           </Link>
         )}
       </div>
@@ -78,7 +78,7 @@ export default function TicketList({ title, showCreateButton = false, filterTick
           ))}
         </select>
         <select name="priorite" className="select" value={filtres.priorite} onChange={handleFiltre}>
-          <option value="">Toutes les priorités</option>
+          <option value="">Toutes les priorites</option>
           {PRIORITES.map((p) => (
             <option key={p.value} value={p.value}>
               {p.label}
@@ -86,7 +86,7 @@ export default function TicketList({ title, showCreateButton = false, filterTick
           ))}
         </select>
         <select name="categorie" className="select" value={filtres.categorie} onChange={handleFiltre}>
-          <option value="">Toutes les catégories</option>
+          <option value="">Toutes les categories</option>
           {CATEGORIES_DEMO.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -94,7 +94,7 @@ export default function TicketList({ title, showCreateButton = false, filterTick
           ))}
         </select>
         <button className="btn btn--ghost" onClick={reinitialiserFiltres}>
-          Réinitialiser
+          Reinitialiser
         </button>
       </div>
 
@@ -102,7 +102,7 @@ export default function TicketList({ title, showCreateButton = false, filterTick
         <p className="muted">Chargement des tickets...</p>
       ) : ticketsFiltres.length === 0 ? (
         <div className="empty">
-          <p>Aucun ticket ne correspond à ta recherche.</p>
+          <p>Aucun ticket ne correspond a votre recherche.</p>
         </div>
       ) : (
         <div className="ticket-list">
@@ -127,7 +127,7 @@ export default function TicketList({ title, showCreateButton = false, filterTick
         </div>
       )}
 
-      <p className="muted count">{ticketsFiltres.length} ticket(s) affiché(s)</p>
+      <p className="muted count">{ticketsFiltres.length} ticket(s) affiche(s)</p>
     </div>
   );
 }

@@ -93,8 +93,16 @@ export default function RegisterPage() {
       setError('Les mots de passe ne correspondent pas')
       return
     }
-    if (form.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères')
+    if (form.password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères')
+      return
+    }
+    if (!/[A-Z]/.test(form.password)) {
+      setError('Le mot de passe doit contenir au moins une majuscule')
+      return
+    }
+    if (!/[0-9]/.test(form.password)) {
+      setError('Le mot de passe doit contenir au moins un chiffre')
       return
     }
     setLoading(true)
@@ -241,7 +249,7 @@ export default function RegisterPage() {
                 <div className="lfield">
                   <label htmlFor="password">Mot de passe *</label>
                   <div className="linput-wrap">
-                    <input id="password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Min 6 car." value={form.password} onChange={handleChange} autoComplete="new-password" style={{ paddingLeft: 14 }} />
+                    <input id="password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Min 8 car., 1 maj., 1 chiffre" value={form.password} onChange={handleChange} autoComplete="new-password" style={{ paddingLeft: 14 }} />
                     <button type="button" className="lpassword-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
                       {showPassword ? (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
