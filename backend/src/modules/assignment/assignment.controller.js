@@ -2,6 +2,7 @@
 const { Ticket, Category, User, HistoriqueTicket, Notification } = require('../../models');
 const asyncHandler = require('../../utils/asyncHandler');
 const { ROLES } = require('../../constants/roles');
+const { serializeTicket } = require('../../utils/serializers');
 
 const listUnassigned = asyncHandler(async (req, res) => {
   const tickets = await Ticket.findAll({
@@ -16,13 +17,14 @@ const listUnassigned = asyncHandler(async (req, res) => {
       ['date_creation', 'ASC'],
     ],
   });
-  res.json(tickets);
+  res.json(tickets.map(serializeTicket));
 });
 
 const assign = asyncHandler(async (req, res) => {
-  const { technicien_id } = req.body;
+  // Le client frontend (frontend/src/services/ahmaApi.js) envoie "technicianId".
+  const technicien_id = req.body.technicianId ?? req.body.technicien_id;
   if (!technicien_id) {
-    return res.status(400).json({ message: 'technicien_id est requis' });
+    return res.status(400).json({ message: 'technicianId est requis' });
   }
 
   const ticket = await Ticket.findByPk(req.params.id);
@@ -58,7 +60,7 @@ const assign = asyncHandler(async (req, res) => {
       { model: User, as: 'technicien', attributes: ['id', 'nom', 'email'] },
     ],
   });
-  res.json(updated);
+  res.json(serializeTicket(updated));
 });
 
 module.exports = { listUnassigned, assign };

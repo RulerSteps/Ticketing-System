@@ -1,7 +1,7 @@
 const app = require('./app');
 const sequelize = require('./config/database');
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5000;
 
 async function start() {
   try {

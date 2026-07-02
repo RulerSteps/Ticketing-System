@@ -3,6 +3,7 @@ const router = require('express').Router();
 router.use('/auth', require('../modules/auth/auth.routes'));
 router.use('/categories', require('../modules/categories/categories.routes'));
 router.use('/users', require('../modules/users/users.routes'));
+router.use('/notifications', require('../modules/notifications/notifications.routes'));
 
 // Attention a l'ordre : les routes d'affectation (/tickets/unassigned, /tickets/:id/assign)
 // sont montees avant le routeur CRUD general des tickets pour eviter que

@@ -17,25 +17,55 @@ function buildFilters(query) {
   return where;
 }
 
+// Forme de reponse attendue par DashboardAdmin.jsx (frontend/src/services/ahmaApi.js: getStats)
 const overview = asyncHandler(async (req, res) => {
   const where = buildFilters(req.query);
 
-  const [total, parStatut, parPriorite, parCriticiteIA] = await Promise.all([
+  const [total, ouverts, enCours, resolus, parCategorie] = await Promise.all([
     Ticket.count({ where }),
-    Ticket.findAll({ where, attributes: ['statut', [fn('COUNT', col('id')), 'total']], group: ['statut'] }),
-    Ticket.findAll({ where, attributes: ['priorite', [fn('COUNT', col('id')), 'total']], group: ['priorite'] }),
+    Ticket.count({ where: { ...where, statut: 'nouveau' } }),
+    Ticket.count({ where: { ...where, statut: { [Op.in]: ['assigne', 'en_cours', 'en_attente'] } } }),
+    Ticket.count({ where: { ...where, statut: { [Op.in]: ['resolu', 'ferme'] } } }),
     Ticket.findAll({
-      where: { ...where, ia_criticite: { [Op.ne]: null } },
-      attributes: ['ia_criticite', [fn('COUNT', col('id')), 'total']],
-      group: ['ia_criticite'],
+      where,
+      attributes: ['categorie_id', [fn('COUNT', col('Ticket.id')), 'count']],
+      include: [{ model: Category, as: 'categorie', attributes: ['nom'] }],
+      group: ['categorie_id', 'categorie.id'],
     }),
   ]);
 
+  // Evolution sur les 7 derniers jours (widget "byDay" du dashboard)
+  const septJoursAvant = new Date();
+  septJoursAvant.setDate(septJoursAvant.getDate() - 6);
+  septJoursAvant.setHours(0, 0, 0, 0);
+
+  const ticketsRecents = await Ticket.findAll({
+    where: { date_creation: { [Op.gte]: septJoursAvant } },
+    attributes: ['date_creation'],
+    raw: true,
+  });
+
+  const byDay = [];
+  for (let i = 6; i >= 0; i -= 1) {
+    const jour = new Date();
+    jour.setDate(jour.getDate() - i);
+    const label = jour.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
+    const count = ticketsRecents.filter(
+      (t) => new Date(t.date_creation).toDateString() === jour.toDateString()
+    ).length;
+    byDay.push({ date: label.charAt(0).toUpperCase() + label.slice(1), count });
+  }
+
   res.json({
     total,
-    par_statut: parStatut,
-    par_priorite: parPriorite,
-    par_criticite_ia: parCriticiteIA,
+    open: ouverts,
+    inProgress: enCours,
+    resolved: resolus,
+    byCategory: parCategorie.map((row) => ({
+      name: row.categorie ? row.categorie.nom : 'Non classe',
+      count: Number(row.get('count')),
+    })),
+    byDay,
   });
 });
 
